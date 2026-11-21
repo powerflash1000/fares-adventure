@@ -8,7 +8,7 @@ Working memory for Claude sessions. Talk to the user in Egyptian Arabic, short a
 
 ## Hard decisions
 - Static PWA, no build step: `index.html` + `vendor/phaser.min.js` (Phaser 3.80.1, MIT) + ES modules in `js/`. GitHub Pages. Later Capacitor for stores.
-- Art = original SVG drawn in code (`js/art.js`, loaded as base64 data URIs; non-ASCII chars must be converted to `&#NNN;` entities first — Phaser decodes as Latin-1). Characters are placeholders until the polish stage (Higgsfield character refs exist in the user's account: father Alaa, Fares, Farid, maybe Farha).
+- Art = original SVG drawn in code (`js/art.js`, loaded as base64 data URIs; non-ASCII chars must be converted to `&#NNN;` entities first — Phaser decodes as Latin-1). Characters are placeholders until the polish stage (Higgsfield character refs exist in the user's account: father Alaa, Fares, Farid, Farha). Family ages: Farha 16 (oldest), Farid 15, Fares 5 — Farha is the big sister; never call Farid the "big brother" of Farha.
 - Narration now = browser `speechSynthesis` (ar-EG/ar); planned: user's ElevenLabs voice «Alaa Reader» (`e6vPzasYhrgOl8FATPyp`) after the user tests and lines are final (user chose "after I try").
 - Design 1280×800 landscape, `Scale.FIT`. Portrait phones show «لفّ الجهاز».
 - Save in localStorage `fares:save` ({stars, pharos, sound, voice, limitMin, todayMin, today, seenIntro}).

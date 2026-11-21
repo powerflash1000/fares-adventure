@@ -76,7 +76,7 @@ export class Alex extends Phaser.Scene {
   }
   async intro() {
     await say(this, this.fares, L('أنا فارس! وده الكورنيش في إسكندرية 🌊 بحبه أوي', "Hi! I'm Fares! This is the Corniche in Alexandria 🌊 I love it!"));
-    await say(this, this.farha, L('وأنا فرحة! وده فريد أخونا الكبير', "I'm Farha! And this is Farid, our big brother!"));
+    await say(this, this.farha, L('وأنا فرحة، أختك الكبيرة! بحبك أوي يا فارس', "I'm Farha, Fares's big sister! I love you so much, Fares!"));
     await say(this, this.dad, L('يلا يا أبطال، النهارده هنروح مكتبة الإسكندرية!', "Come on, heroes! Today we're going to the Library of Alexandria!"));
     this.busy = false;
   }
