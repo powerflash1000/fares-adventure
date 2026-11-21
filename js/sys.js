@@ -105,7 +105,8 @@ export function say(scene, who, text, { x, y, width = 520, speakIt = true, hold 
   const p = speakIt ? speak(text) : new Promise(r => setTimeout(r, 900 + text.length * 50));
   return p.then(() => new Promise(r => scene.time.delayedCall(hold, r))).then(() => { if (c.active) scene.tweens.add({ targets: c, scale: 0, duration: 180, onComplete: () => c.destroy() }); });
 }
-const clampX = (scene, x, w) => Math.min(scene.scale.width - w / 2 - 10, Math.max(w / 2 + 10, x));
+// بيخلي الفقاعة جوه الشاشة حتى لو الكاميرا ماشية (الكورنيش)
+const clampX = (scene, x, w) => { const sx = scene.cameras.main.scrollX; return Math.min(sx + scene.scale.width - w / 2 - 10, Math.max(sx + w / 2 + 10, x)); };
 
 // احتفال: نجوم ونور
 export function celebrate(scene, x, y, n = 18) {

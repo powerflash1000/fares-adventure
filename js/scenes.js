@@ -2,6 +2,9 @@
 import { SVGS, W, H } from './art.js';
 import { FONT, Save, Sfx, speak, hush, button, say, celebrate, idle, gradient, back, L, rtl } from './sys.js';
 
+const CHAR_ART = { fares: ['', 'run', 'jump', 'cheer', 'point'], farid: ['', 'walk', 'cheer'], farha: ['', 'walk', 'cheer'], dad: ['', 'walk'], mom: ['', 'walk'] };
+// صورة خلفية بتغطي الشاشة كلها
+const cover = (scene, key) => { const im = scene.add.image(W / 2, H / 2, key); im.setScale(Math.max(W / im.width, H / im.height)); return im; };
 const FAMILY = { fares: 'فارس', farid: 'فريد', farha: 'فرحة', dad: 'بابي', mom: 'مامي' };
 
 // ===== تحميل الرسومات =====
@@ -12,7 +15,10 @@ export class Boot extends Phaser.Scene {
     const bar = this.add.graphics();
     this.add.text(width / 2, height / 2 - 60, L('رحلة فارس', "Fares' Adventure"), { fontFamily: FONT, fontSize: 64, color: '#fff', fontStyle: '800', rtl: rtl() }).setOrigin(0.5);
     this.load.on('progress', p => { bar.clear().fillStyle(0xffffff, 0.25).fillRoundedRect(width / 2 - 250, height / 2 + 10, 500, 24, 12).fillStyle(0xffd43b).fillRoundedRect(width / 2 - 250, height / 2 + 10, 500 * p, 24, 12); });
-    for (const [k, svg] of Object.entries(SVGS)) this.load.svg(k, 'data:image/svg+xml;base64,' + btoa(svg.replace(/[^\x00-\x7f]/gu, c => `&#${c.codePointAt(0)};`)));
+    for (const [k, svg] of Object.entries(SVGS)) if (!(k in CHAR_ART)) this.load.svg(k, 'data:image/svg+xml;base64,' + btoa(svg.replace(/[^\x00-\x7f]/gu, c => `&#${c.codePointAt(0)};`)));
+    // رسومات العيلة الحقيقية (Seedream) — الأوضاع: واقف، بيجري/بيمشي، بينط، بيحتفل، بيشاور
+    for (const [k, poses] of Object.entries(CHAR_ART)) for (const p of poses) this.load.image(p ? `${k}_${p}` : k, `assets/art/chars/${p ? `${k}_${p}` : k}.png`);
+    for (const b of ['alex1', 'alex2', 'qaitbay', 'plant']) this.load.image(`bg_${b}`, `assets/art/bg/${b}.jpg`);
   }
   async create() {
     try { await document.fonts.load('800 40px Cairo'); await document.fonts.load('700 30px Cairo'); } catch { /* */ }
@@ -24,16 +30,18 @@ export class Boot extends Phaser.Scene {
 export class Title extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
-    gradient(this, 0x5f3dc4, 0x1c7ed6);
+    cover(this, 'bg_qaitbay');
+    this.add.rectangle(W / 2, H / 2, W, H, 0x1b1040, 0.25);
     for (let i = 0; i < 40; i++) { const s = this.add.circle(Math.random() * W, Math.random() * H * 0.7, 2 + Math.random() * 3, 0xffffff, 0.7); this.tweens.add({ targets: s, alpha: 0.1, duration: 800 + Math.random() * 1500, yoyo: true, repeat: -1 }); }
-    const ph = this.add.image(W - 200, H - 40, `pharos${Math.min(3, Save.d.pharos)}`).setOrigin(0.5, 1).setScale(0.85);
+    const ph = null;
     this.add.image(W - 200, 150, 'nori').setScale(0.6).setAlpha(Save.d.pharos ? 1 : 0.5);
-    const t = this.add.text(W / 2 - 120, 190, L('رحلة فارس', "Fares' Adventure"), { fontFamily: FONT, fontSize: 96, color: '#fff', fontStyle: '800', rtl: rtl(), stroke: '#3b1f8f', strokeThickness: 14 }).setOrigin(0.5);
+    const TX = W / 2 + 170;
+    const t = this.add.text(TX, 190, L('رحلة فارس', "Fares' Adventure"), { fontFamily: FONT, fontSize: 96, color: '#fff', fontStyle: '800', rtl: rtl(), stroke: '#3b1f8f', strokeThickness: 14 }).setOrigin(0.5);
     this.tweens.add({ targets: t, y: 200, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    this.add.text(W / 2 - 120, 300, L('من إسكندرية لعوالم العلم', 'From Alexandria to worlds of wonder'), { fontFamily: FONT, fontSize: 40, color: '#ffe066', fontStyle: '700', rtl: rtl() }).setOrigin(0.5);
-    const kids = ['farha', 'fares', 'farid'].map((k, i) => { const s = this.add.image(W / 2 - 300 + i * 180, H - 40, k).setOrigin(0.5, 1).setScale(k === 'fares' ? 0.95 : 0.85); idle(this, s); return s; });
-    button(this, W / 2 - 120, 440, Save.d.seenIntro ? L('▶  كمّل المغامرة', '▶  Keep going!') : L('▶  يلا نبدأ!', "▶  Let's go!"), () => this.scene.start(Save.d.seenIntro ? 'Map' : 'Alex'), { w: 400, h: 110, size: 44 });
-    if (Save.d.seenIntro) button(this, W / 2 - 120, 560, L('🌊  إسكندرية تاني', '🌊  Alexandria again'), () => this.scene.start('Alex'), { w: 320, h: 80, size: 30, color: 0xffffff });
+    this.add.text(TX, 300, L('من إسكندرية لعوالم العلم', 'From Alexandria to worlds of wonder'), { fontFamily: FONT, fontSize: 40, color: '#ffe066', fontStyle: '700', rtl: rtl() }).setOrigin(0.5);
+    const kids = ['farha', 'fares', 'farid'].map((k, i) => { const s = this.add.image(150 + i * 175, H - 30, k).setOrigin(0.5, 1).setScale(k === 'fares' ? 0.95 : 0.85); idle(this, s); return s; });
+    button(this, TX, 440, Save.d.seenIntro ? L('▶  كمّل المغامرة', '▶  Keep going!') : L('▶  يلا نبدأ!', "▶  Let's go!"), () => this.scene.start(Save.d.seenIntro ? 'Map' : 'Alex'), { w: 400, h: 110, size: 44 });
+    if (Save.d.seenIntro) button(this, TX, 560, L('🌊  إسكندرية تاني', '🌊  Alexandria again'), () => this.scene.start('Alex'), { w: 320, h: 80, size: 30, color: 0xffffff });
     button(this, W - 80, 60, '⚙️', () => this.scene.start('Parent'), { w: 100, h: 76, color: 0xffffff, size: 36 });
     void ph; void kids;
   }
@@ -45,15 +53,13 @@ export class Alex extends Phaser.Scene {
   create() {
     const LW = W * 3;
     this.cameras.main.setBounds(0, 0, LW, H);
-    this.add.image(0, 0, 'corniche').setOrigin(0, 0);
-    this.add.image(LW - 520, 560, 'qaitbay').setOrigin(0.5, 1).setScale(1.05);
-    this.add.image(1500, 562, 'stanley').setOrigin(0.5, 1);
-    this.add.image(560, 640, 'school').setOrigin(0.5, 1).setScale(0.75).setDepth(2);
-    const lib = this.add.image(2550, 650, 'library').setOrigin(0.5, 1).setScale(1.1).setDepth(2);
-    const tram = this.add.image(-400, 770, 'tram').setOrigin(0.5, 1).setScale(0.9).setDepth(3);
-    this.tweens.add({ targets: tram, x: LW + 400, duration: 26000, repeat: -1, delay: 2000 });
-    // البوابة مستخبية في المكتبة — بتظهر لما فارس يوصل
-    this.portal = this.add.image(lib.x + 30, 560, 'portal').setScale(0).setDepth(4);
+    // الكورنيش ← مكتبة الإسكندرية (البوابة في الساحة) ← قلعة قايتباي
+    // بانوراما واحدة متدمجة (نصّين علشان حجم الصورة على الآيباد)
+    const a1 = this.add.image(0, 0, 'bg_alex1').setOrigin(0, 0);
+    this.add.image(a1.width, 0, 'bg_alex2').setOrigin(0, 0);
+    const lib = { x: 2359 - 30 };
+    // البوابة: بتكبر وتلف لما فارس يوصل
+    this.portal = this.add.image(lib.x + 30, 480, 'portal').setScale(0).setDepth(4);
     // العيلة
     this.dad = this.add.image(380, 760, 'dad').setOrigin(0.5, 1).setScale(0.62).setDepth(5);
     this.mom = this.add.image(250, 760, 'mom').setOrigin(0.5, 1).setScale(0.62).setDepth(5);
@@ -88,14 +94,20 @@ export class Alex extends Phaser.Scene {
       const v = 0.42 * dt * dir;
       this.fares.x = Phaser.Math.Clamp(this.fares.x + v, 120, W * 3 - 120);
       this.fares.setFlipX(dir < 0);
+      if (this.fares.texture.key !== 'fares_run') { this.fares.setTexture('fares_run'); [this.farha, this.farid, this.dad, this.mom].forEach(s => s.setTexture(`${s.texture.key.split('_')[0]}_walk`)); }
       this.fares.y = 780 - Math.abs(Math.sin(t / 90)) * 10;
       // العيلة بتمشي ورا فارس
       [[this.farha, -110], [this.farid, -210], [this.dad, -360], [this.mom, -480]].forEach(([s, off]) => { s.x += (this.fares.x + off - s.x) * 0.06; s.setFlipX(dir < 0); });
+    } else if (this.fares.texture.key === 'fares_run') {
+      [this.fares, this.farha, this.farid, this.dad, this.mom].forEach(s => s.setTexture(s.texture.key.split('_')[0]).setFlipX(false));
+      this.fares.y = 780;
     }
-    if (this.fares.x > 2440 && !this.arrived) this.reachLibrary();
+    if (this.fares.x > this.portal.x - 140 && !this.arrived) this.reachLibrary();
   }
   async reachLibrary() {
     this.arrived = true; this.target = null; this.walking = 0;
+    [this.fares, this.farha, this.farid, this.dad, this.mom].forEach(s => s.setTexture(s.texture.key.split('_')[0]).setFlipX(false)); this.fares.y = 780;
+    this.fares.setTexture('fares_point');
     this.hint.setText(L('مكتبة الإسكندرية 📚', 'The Library of Alexandria 📚'));
     await say(this, this.dad, L('دي مكتبة الإسكندرية، فيها كتب من كل الدنيا!', 'This is the Library of Alexandria. It has books from all over the world!'));
     Sfx.sparkle();
@@ -158,6 +170,7 @@ export class Map extends Phaser.Scene {
 class Mission extends Phaser.Scene {
   head(title, top = 0xd3f9d8, bottom = 0x8ce99a) {
     gradient(this, top, bottom);
+    cover(this, 'bg_plant'); this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0.35);
     this.add.rectangle(W / 2, H - 70, W, 140, 0x8d5524).setAlpha(0.35);
     this.add.text(W / 2, 50, title, { fontFamily: FONT, fontSize: 38, color: '#1b4332', fontStyle: '800', rtl: rtl() }).setOrigin(0.5);
     back(this, 'Map');
@@ -167,6 +180,7 @@ class Mission extends Phaser.Scene {
   hint(text) { return say(this, this.nori, text, { x: W - 360, y: 275 }); }
   async win(id, next) {
     const first = Save.star(id);
+    this.kid.setTexture('fares_cheer');
     Sfx.win(); celebrate(this, W / 2, H / 2, 26);
     const s = this.add.image(W / 2, H / 2, 'star').setScale(0).setDepth(70);
     this.tweens.add({ targets: s, scale: 2.2, angle: 360, duration: 900, ease: 'Back.Out' });
@@ -303,11 +317,11 @@ export class Light extends Phaser.Scene {
     for (let i = 0; i < 60; i++) this.add.circle(Math.random() * W, Math.random() * H * 0.6, 1.5 + Math.random() * 2, 0xffffff, 0.8);
     const ph = this.add.image(W / 2, H - 10, 'pharos0').setOrigin(0.5, 1).setScale(1.1);
     const nori = this.add.image(W / 2 - 300, 180, 'nori').setScale(0.6); idle(this, nori, 0.06);
-    const kids = ['farha', 'fares', 'farid'].map((k, i) => this.add.image(220 + i * 140, H - 10, k).setOrigin(0.5, 1).setScale(0.5));
+    const kids = ['farha', 'fares', 'farid'].map((k, i) => this.add.image(130 + i * 150, H - 10, k).setOrigin(0.5, 1).setScale(0.5));
     (async () => {
       await say(this, nori, L('جمعتوا ٣ نجوم من جزيرة النبات! يلا ننوّر أول دور في الفنار ✨', "You got 3 stars on Plant Island! Let's light up the lighthouse ✨"));
       Sfx.win(); this.cameras.main.flash(700, 255, 230, 150);
-      ph.setTexture('pharos1'); celebrate(this, W / 2, H - 200, 30);
+      ph.setTexture('pharos1'); celebrate(this, W / 2, H - 200, 30); kids.forEach(k => k.setTexture(`${k.texture.key}_cheer`));
       await say(this, kids[1], L('شوفوا! الفنار بدأ ينوّر! 🌟', 'Look! The lighthouse is shining! 🌟'));
       await say(this, nori, L('لسه فيه جزر تانية مستنيانا… قريب جدًا!', 'More islands are waiting for us… very soon!'));
       button(this, W / 2, 120, L('للخريطة 🗺️', 'To the map 🗺️'), () => this.scene.start('Map'), { w: 320 });
