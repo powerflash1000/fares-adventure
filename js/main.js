@@ -1,6 +1,7 @@
 import { W, H } from './art.js';
 import { Boot, Title, Alex, Map, Plant1, Plant2, Plant3, Light, Parent, Rest } from './scenes.js';
 import { Save } from './sys.js';
+import { Plant4, Plant5, Water1, Water2, Water3, Cave1, Cave2, Cave3 } from './islands.js';
 import { ALL_VOICE_FILES } from './voice.js';
 
 const game = new Phaser.Game({
@@ -11,7 +12,7 @@ const game = new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   render: { antialias: true, roundPixels: false },
   input: { activePointers: 2 },
-  scene: [Boot, Title, Alex, Map, Plant1, Plant2, Plant3, Light, Parent, Rest],
+  scene: [Boot, Title, Alex, Map, Plant1, Plant2, Plant3, Plant4, Plant5, Water1, Water2, Water3, Cave1, Cave2, Cave3, Light, Parent, Rest],
 });
 
 // ⏰ حد اللعب اليومي (بيتعد بس والتاب مفتوح وظاهر)

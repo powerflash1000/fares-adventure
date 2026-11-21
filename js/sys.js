@@ -103,7 +103,9 @@ export function say(scene, who, text, { x, y, width = 520, speakIt = true, hold 
   const c = scene.add.container(clampX(scene, bx, w), by, [g, t]).setDepth(50).setScale(0);
   scene.tweens.add({ targets: c, scale: 1, duration: 260, ease: 'Back.Out' });
   const p = speakIt ? speak(text) : new Promise(r => setTimeout(r, 900 + text.length * 50));
-  return p.then(() => new Promise(r => scene.time.delayedCall(hold, r))).then(() => { if (c.active) scene.tweens.add({ targets: c, scale: 0, duration: 180, onComplete: () => c.destroy() }); });
+  // لو المشهد اتقفل قبل ما الجملة تخلص، منلمسش حاجة فيه
+  const alive = () => scene.sys && scene.sys.isActive() && c.active;
+  return p.then(() => new Promise(r => (alive() ? scene.time.delayedCall(hold, r) : r()))).then(() => { if (alive()) scene.tweens.add({ targets: c, scale: 0, duration: 180, onComplete: () => c.destroy() }); });
 }
 // بيخلي الفقاعة جوه الشاشة حتى لو الكاميرا ماشية (الكورنيش)
 const clampX = (scene, x, w) => { const sx = scene.cameras.main.scrollX; return Math.min(sx + scene.scale.width - w / 2 - 10, Math.max(sx + w / 2 + 10, x)); };
