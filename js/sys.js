@@ -3,13 +3,18 @@ export const FONT = 'Cairo, Tahoma, sans-serif';
 
 // ===== الحفظ (على الجهاز) =====
 const KEY = 'fares:save';
-const DEF = { stars: {}, pharos: 0, sound: true, voice: true, limitMin: 30, todayMin: 0, today: '', seenIntro: false };
+const DEF = { lang: 'en', stars: {}, pharos: 0, sound: true, voice: true, limitMin: 30, todayMin: 0, today: '', seenIntro: false };
 export const Save = {
   d: (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { ...DEF }; } })(),
   put() { try { localStorage.setItem(KEY, JSON.stringify(this.d)); } catch { /* */ } },
   star(id) { if (!this.d.stars[id]) { this.d.stars[id] = true; this.put(); return true; } return false; },
   count(prefix) { return Object.keys(this.d.stars).filter(k => k.startsWith(prefix)).length; },
 };
+
+// اللغة: إنجليزي بسيط (الأساسي) أو عربي — L('عربي', 'English')
+export const isAr = () => Save.d.lang === 'ar';
+export const L = (ar, en) => (isAr() ? ar : en);
+export const rtl = () => isAr();
 
 // ===== أصوات بسيطة بالكود (من غير ملفات): نجاح، غلط لطيف، دوس، احتفال =====
 let ac = null;
@@ -29,15 +34,20 @@ export const Sfx = {
 };
 
 // ===== الراوي: صوت مؤقت من المتصفح (عربي) لحد ما نولّد الجمل بصوت بابا من ElevenLabs =====
-let arVoice = null;
-function pickVoice() { const v = speechSynthesis.getVoices(); arVoice = v.find(x => /ar[-_]EG/i.test(x.lang)) || v.find(x => /^ar/i.test(x.lang)) || null; }
+let arVoice = null, enVoice = null;
+function pickVoice() {
+  const v = speechSynthesis.getVoices();
+  arVoice = v.find(x => /ar[-_]EG/i.test(x.lang)) || v.find(x => /^ar/i.test(x.lang)) || null;
+  enVoice = v.find(x => /en[-_]US/i.test(x.lang) && /samantha|female|google us/i.test(x.name)) || v.find(x => /en[-_](US|GB)/i.test(x.lang)) || v.find(x => /^en/i.test(x.lang)) || null;
+}
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 export function speak(text, { rate = 0.95, pitch = 1.15 } = {}) {
   return new Promise(res => {
     if (!Save.d.voice || !('speechSynthesis' in window)) return setTimeout(res, Math.min(4000, 600 + text.length * 55));
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text.replace(/[🌱💧☀️⭐🌟✨🎉👏💪🧭🔦]/gu, ''));
-    u.lang = arVoice?.lang || 'ar-EG'; if (arVoice) u.voice = arVoice; u.rate = rate; u.pitch = pitch;
+    const vv = isAr() ? arVoice : enVoice;
+    u.lang = vv?.lang || (isAr() ? 'ar-EG' : 'en-US'); if (vv) u.voice = vv; u.rate = isAr() ? rate : rate * 0.95; u.pitch = pitch;
     let done = false; const fin = () => { if (!done) { done = true; res(); } };
     u.onend = fin; u.onerror = fin; setTimeout(fin, 1500 + text.length * 120);
     speechSynthesis.speak(u);
@@ -51,7 +61,7 @@ export function button(scene, x, y, label, onClick, { w = 280, h = 90, color = 0
   const c = scene.add.container(x, y);
   const shadow = scene.add.graphics().fillStyle(0x000000, 0.18).fillRoundedRect(-w / 2, -h / 2 + 8, w, h, h / 2);
   const bg = scene.add.graphics().fillStyle(color, 1).fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
-  const t = scene.add.text(0, 0, label, { fontFamily: FONT, fontSize: size, color: text, fontStyle: '800', rtl: true }).setOrigin(0.5);
+  const t = scene.add.text(0, 0, label, { fontFamily: FONT, fontSize: size, color: text, fontStyle: '800', rtl: rtl() }).setOrigin(0.5);
   c.add([shadow, bg, t]);
   c.setSize(w, h).setInteractive({ useHandCursor: true });
   c.on('pointerdown', () => { Sfx.tap(); scene.tweens.add({ targets: c, scale: 0.92, duration: 80, yoyo: true, onComplete: () => onClick?.() }); });
@@ -62,7 +72,7 @@ export function button(scene, x, y, label, onClick, { w = 280, h = 90, color = 0
 // فقاعة كلام بتطلع فوق الشخصية + الراوي بيقولها
 export function say(scene, who, text, { x, y, width = 520, speakIt = true, hold = 0 } = {}) {
   const bx = x ?? who.x, by = y ?? (who.y - who.displayHeight * who.originY - 20);
-  const t = scene.add.text(0, 0, text, { fontFamily: FONT, fontSize: 30, color: '#1d1d1d', fontStyle: '700', rtl: true, align: 'center', wordWrap: { width: width - 40, useAdvancedWrap: true } }).setOrigin(0.5);
+  const t = scene.add.text(0, 0, text, { fontFamily: FONT, fontSize: 30, color: '#1d1d1d', fontStyle: '700', rtl: rtl(), align: 'center', wordWrap: { width: width - 40, useAdvancedWrap: true } }).setOrigin(0.5);
   const w = Math.max(160, t.width + 46), h = t.height + 34;
   const g = scene.add.graphics();
   g.fillStyle(0x000000, 0.15).fillRoundedRect(-w / 2, -h + 6, w, h, 26);

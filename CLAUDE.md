@@ -22,3 +22,4 @@ Working memory for Claude sessions. Talk to the user in Egyptian Arabic, short a
 
 ## Roadmap
 M0+M1 done (Alexandria, portal, Plant island). Next: 💧 water island, 🔦 courage cave, ElevenLabs narration, art polish (Higgsfield), parent dashboard, Capacitor/App Store.
+- Language (2026-11-21, user-requested): **simple English is the default** (Fares understands English well); Arabic optional via the parents' corner «🌐 Language» (`Save.d.lang`, reload). `sys.js L(ar, en)`, `isAr()`, `rtl()`; speech voice en-US/ar-EG accordingly; SVG text uses `isAr()` (box shows ✖ instead of words). Never name a local variable `L` in scenes (it shadows the translator — broke the Alexandria scene once).

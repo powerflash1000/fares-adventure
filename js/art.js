@@ -1,3 +1,4 @@
+import { isAr } from './sys.js';
 // كل رسومات اللعبة SVG بالكود (أصلية — من غير صور من النت): بتتحول لصور (textures) مرة واحدة في البداية.
 // الشخصيات شكل كارتون مؤقت؛ في مرحلة التلميع هنستبدلها برسومات من صور العيلة (Higgsfield).
 
@@ -99,7 +100,7 @@ const school = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320"
   <rect x="20" y="100" width="380" height="210" fill="#ffd8a8"/><path d="M0 104 L210 10 L420 104 Z" fill="#e8590c"/>
   ${[60, 150, 250, 340].map(x => `<rect x="${x - 25}" y="140" width="50" height="50" rx="6" fill="#a5d8ff"/>`).join('')}
   <rect x="180" y="220" width="60" height="90" rx="8" fill="#8c5a2b"/><circle cx="210" cy="70" r="24" fill="#fff"/><path d="M210 56v14l10 6" stroke="#333" stroke-width="4" fill="none"/>
-  <text x="210" y="125" font-size="26" text-anchor="middle" fill="#7a3b10" font-family="Cairo">مدرستي</text></svg>`;
+  <text x="210" y="125" font-size="26" text-anchor="middle" fill="#7a3b10" font-family="Cairo">${isAr() ? 'مدرستي' : 'MY SCHOOL'}</text></svg>`;
 
 // البوابة السحرية (حلقة نور)
 const portal = `<svg xmlns="http://www.w3.org/2000/svg" width="260" height="260" viewBox="0 0 260 260">
@@ -134,7 +135,7 @@ const items = {
   apple: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><circle cx="45" cy="50" r="32" fill="#e03131"/><path d="M45 20 q4 -14 14 -16" stroke="#5c3d2e" stroke-width="5" fill="none"/><path d="M48 18 q18 -10 26 4 q-16 6 -26 -4z" fill="#40c057"/><circle cx="34" cy="40" r="7" fill="#ffa8a8"/></svg>`,
   basket: `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="150"><path d="M20 50 h180 l-20 90 h-140z" fill="#c08457"/>${[0, 1, 2, 3].map(i => `<path d="M${40 + i * 45} 50 l-8 90" stroke="#a0663f" stroke-width="5"/>`).join('')}<path d="M40 50 q70 -80 140 0" stroke="#a0663f" stroke-width="10" fill="none"/></svg>`,
   tree: `<svg xmlns="http://www.w3.org/2000/svg" width="460" height="520"><rect x="200" y="300" width="60" height="220" rx="20" fill="#8a5a2b"/><circle cx="230" cy="210" r="190" fill="#40c057"/><circle cx="130" cy="230" r="110" fill="#37b24d"/><circle cx="340" cy="230" r="110" fill="#37b24d"/></svg>`,
-  box: `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="170"><rect x="10" y="40" width="220" height="120" rx="10" fill="#adb5bd"/><path d="M10 40 l30 -30 h160 l30 30z" fill="#ced4da"/><text x="120" y="112" font-size="30" text-anchor="middle" fill="#495057" font-family="Cairo">مش محتاجها</text></svg>`,
+  box: `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="170"><rect x="10" y="40" width="220" height="120" rx="10" fill="#adb5bd"/><path d="M10 40 l30 -30 h160 l30 30z" fill="#ced4da"/><path d="M96 82 l48 48 M144 82 l-48 48" stroke="#e03131" stroke-width="14" stroke-linecap="round"/></svg>`,
   star: `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 6 l16 34 38 5 -28 26 7 37 -33 -18 -33 18 7 -37 -28 -26 38 -5z" fill="#ffd43b" stroke="#f08c00" stroke-width="5" stroke-linejoin="round"/></svg>`,
   starOff: `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 6 l16 34 38 5 -28 26 7 37 -33 -18 -33 18 7 -37 -28 -26 38 -5z" fill="#dee2e6" stroke="#adb5bd" stroke-width="5" stroke-linejoin="round"/></svg>`,
   island: `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><ellipse cx="150" cy="150" rx="140" ry="44" fill="#ffe8a3"/><ellipse cx="150" cy="140" rx="110" ry="34" fill="#69db7c"/><rect x="140" y="60" width="12" height="80" fill="#8a5a2b"/><path d="M146 62 q-50 -6 -70 22 M146 62 q50 -6 70 22 M146 62 q-20 -40 -56 -36 M146 62 q20 -40 56 -36" stroke="#2f9e44" stroke-width="12" fill="none" stroke-linecap="round"/></svg>`,
