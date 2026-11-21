@@ -1,0 +1,30 @@
+import { W, H } from './art.js';
+import { Boot, Title, Alex, Map, Plant1, Plant2, Plant3, Light, Parent, Rest } from './scenes.js';
+import { Save } from './sys.js';
+
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  parent: 'game',
+  width: W, height: H,
+  backgroundColor: '#1c7ed6',
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  render: { antialias: true, roundPixels: false },
+  input: { activePointers: 2 },
+  scene: [Boot, Title, Alex, Map, Plant1, Plant2, Plant3, Light, Parent, Rest],
+});
+
+// ⏰ حد اللعب اليومي (بيتعد بس والتاب مفتوح وظاهر)
+setInterval(() => {
+  if (document.hidden) return;
+  const d = new Date().toISOString().slice(0, 10);
+  if (Save.d.today !== d) { Save.d.today = d; Save.d.todayMin = 0; }
+  Save.d.todayMin += 1 / 6; Save.put();
+  if (Save.d.todayMin >= Save.d.limitMin) {
+    const active = game.scene.getScenes(true)[0]?.scene.key;
+    if (active && !['Rest', 'Parent'].includes(active)) game.scene.getScenes(true).forEach(s => s.scene.start('Rest'));
+  }
+}, 10000);
+
+// PWA: يشتغل من غير نت بعد أول مرة
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+window.__game = game;

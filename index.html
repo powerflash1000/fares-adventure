@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>رحلة فارس</title>
+  <meta name="theme-color" content="#5f3dc4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="رحلة فارس">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <style>
+    @font-face { font-family: Cairo; font-weight: 400; src: url(assets/fonts/cairo-arabic-400-normal.woff2) format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFC; }
+    @font-face { font-family: Cairo; font-weight: 700; src: url(assets/fonts/cairo-arabic-700-normal.woff2) format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFC; }
+    @font-face { font-family: Cairo; font-weight: 800; src: url(assets/fonts/cairo-arabic-800-normal.woff2) format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFC; }
+    @font-face { font-family: Cairo; font-weight: 400; src: url(assets/fonts/cairo-latin-400-normal.woff2) format("woff2"); unicode-range: U+0000-00FF; }
+    @font-face { font-family: Cairo; font-weight: 700; src: url(assets/fonts/cairo-latin-700-normal.woff2) format("woff2"); unicode-range: U+0000-00FF; }
+    @font-face { font-family: Cairo; font-weight: 800; src: url(assets/fonts/cairo-latin-800-normal.woff2) format("woff2"); unicode-range: U+0000-00FF; }
+    html, body { margin: 0; height: 100%; background: #1c3f75; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+    #game { width: 100vw; height: 100vh; height: 100dvh; }
+    #rotate { display: none; position: fixed; inset: 0; background: #5f3dc4; color: #fff; font: 800 28px Cairo, sans-serif; align-items: center; justify-content: center; text-align: center; z-index: 9; }
+    @media (orientation: portrait) and (max-width: 900px) { #rotate { display: flex; } }
+  </style>
+</head>
+<body>
+  <div id="game"></div>
+  <div id="rotate">📱↻<br>لفّ الجهاز بالعرض علشان نلعب</div>
+  <span style="font-family:Cairo;font-weight:800;position:absolute;opacity:0">.فارس</span>
+  <script src="vendor/phaser.min.js"></script>
+  <script type="module" src="js/main.js?v=1"></script>
+</body>
+</html>
