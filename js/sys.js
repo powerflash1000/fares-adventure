@@ -1,4 +1,5 @@
 // الأنظمة: الحفظ، الأصوات، الراوي، وأدوات الواجهة (أزرار، فقاعات كلام، احتفال)
+import { voiceFile } from './voice.js';
 export const FONT = 'Cairo, Tahoma, sans-serif';
 
 // ===== الحفظ (على الجهاز) =====
@@ -33,7 +34,7 @@ export const Sfx = {
   splash: () => { for (let i = 0; i < 6; i++) tone(900 + Math.random() * 600, 0.05, 'sine', 0.05, i * 0.04); },
 };
 
-// ===== الراوي: صوت مؤقت من المتصفح (عربي) لحد ما نولّد الجمل بصوت بابا من ElevenLabs =====
+// ===== الراوي: جمل مسجّلة بأصوات العيلة (ElevenLabs) للإنجليزي، وصوت المتصفح احتياطي لأي جملة مش متسجّلة =====
 let arVoice = null, enVoice = null;
 function pickVoice() {
   const v = speechSynthesis.getVoices();
@@ -41,11 +42,25 @@ function pickVoice() {
   enVoice = v.find(x => /en[-_]US/i.test(x.lang) && /samantha|female|google us/i.test(x.name)) || v.find(x => /en[-_](US|GB)/i.test(x.lang)) || v.find(x => /^en/i.test(x.lang)) || null;
 }
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-export function speak(text, { rate = 0.95, pitch = 1.15 } = {}) {
+// عنصر صوت واحد بيتعاد استخدامه — بيتفتح بأول لمسة علشان iPad/iPhone يسمحوا بالتشغيل
+const au = new Audio(); au.preload = 'auto';
+let unlocked = false, stopCur = null;
+addEventListener('pointerdown', () => { if (unlocked) return; unlocked = true; au.muted = true; au.src = 'assets/voice/count1.mp3'; au.play().then(() => { if (au.muted) { au.pause(); au.muted = false; } }).catch(() => { au.muted = false; }); }, { once: false, capture: true });
+function playClip(src) {
   return new Promise(res => {
-    if (!Save.d.voice || !('speechSynthesis' in window)) return setTimeout(res, Math.min(4000, 600 + text.length * 55));
+    stopCur?.();
+    let done = false; const fin = () => { if (done) return; done = true; stopCur = null; clearTimeout(to); res(); };
+    stopCur = () => { try { au.pause(); } catch { /* */ } fin(); };
+    const to = setTimeout(fin, 15000);
+    au.onended = fin; au.onerror = () => { fin(); };
+    au.muted = false; au.src = src; au.currentTime = 0;
+    au.play().catch(() => fin());
+  });
+}
+function tts(text, rate, pitch) {
+  return new Promise(res => {
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[🌱💧☀️⭐🌟✨🎉👏💪🧭🔦]/gu, ''));
+    const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF\uFE0F]/gu, ''));
     const vv = isAr() ? arVoice : enVoice;
     u.lang = vv?.lang || (isAr() ? 'ar-EG' : 'en-US'); if (vv) u.voice = vv; u.rate = isAr() ? rate : rate * 0.95; u.pitch = pitch;
     let done = false; const fin = () => { if (!done) { done = true; res(); } };
@@ -53,7 +68,14 @@ export function speak(text, { rate = 0.95, pitch = 1.15 } = {}) {
     speechSynthesis.speak(u);
   });
 }
-export const hush = () => { try { speechSynthesis.cancel(); } catch { /* */ } };
+export function speak(text, { rate = 0.95, pitch = 1.15 } = {}) {
+  if (!Save.d.voice) return new Promise(res => setTimeout(res, Math.min(4000, 600 + text.length * 55)));
+  const clip = !isAr() && voiceFile(text);
+  if (clip) { try { speechSynthesis.cancel(); } catch { /* */ } return playClip(clip); }
+  if (!('speechSynthesis' in window)) return new Promise(res => setTimeout(res, Math.min(4000, 600 + text.length * 55)));
+  return tts(text, rate, pitch);
+}
+export const hush = () => { try { speechSynthesis.cancel(); } catch { /* */ } stopCur?.(); };
 
 // ===== أدوات الواجهة =====
 // زرار مدوّر كبير مناسب لصباع طفل

@@ -1,6 +1,7 @@
 import { W, H } from './art.js';
 import { Boot, Title, Alex, Map, Plant1, Plant2, Plant3, Light, Parent, Rest } from './scenes.js';
 import { Save } from './sys.js';
+import { ALL_VOICE_FILES } from './voice.js';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -27,4 +28,6 @@ setInterval(() => {
 
 // PWA: يشتغل من غير نت بعد أول مرة
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+// حمّل الأصوات المسجّلة في الخلفية علشان تشتغل فورًا ومن غير نت بعد كده
+addEventListener('load', () => setTimeout(() => ALL_VOICE_FILES.forEach((f, i) => setTimeout(() => fetch(f).catch(() => {}), i * 120)), 1500));
 window.__game = game;

@@ -76,7 +76,7 @@ export class Alex extends Phaser.Scene {
   }
   async intro() {
     await say(this, this.fares, L('أنا فارس! وده الكورنيش في إسكندرية 🌊 بحبه أوي', "Hi! I'm Fares! This is the Corniche in Alexandria 🌊 I love it!"));
-    await say(this, this.farha, L('وأنا فرحة، أختك الكبيرة! بحبك أوي يا فارس', "I'm Farha, Fares's big sister! I love you so much, Fares!"));
+    await say(this, this.farha, L('وأنا فرحة، أختك الكبيرة! بحبك أوي يا فارس', "I'm Farha, Fares's big sister! I love you so much, Fares! Wait for me!"));
     await say(this, this.dad, L('يلا يا أبطال، النهارده هنروح مكتبة الإسكندرية!', "Come on, heroes! Today we're going to the Library of Alexandria!"));
     this.busy = false;
   }
@@ -108,7 +108,8 @@ export class Alex extends Phaser.Scene {
       await say(this, nori, L('أهلًا يا فارس! أنا نوري، نور فنار إسكندرية القديم ✨', "Hello, Fares! I'm Nori, the light of the old Lighthouse of Alexandria ✨"));
       await say(this, nori, L('الفنار نوره انطفى… ومحتاج نجمع نجوم العلم من جزر بعيدة علشان يرجع ينوّر!', "Oh no! The lighthouse lost its light… Let's collect stars of knowledge from faraway islands to light it up again!"));
       await say(this, this.fares, L('أنا جاهز! ومعايا فريد وفرحة 💪', "I'm ready! Farid and Farha are coming too 💪"));
-      await say(this, this.mom, L('خلّوا بالكم من بعض يا حبايبي، ونستناكم هنا 🤍', "Take care of each other, my loves. We'll wait for you here 🤍"));
+      await say(this, this.farid, L('ما تقلقش يا صغيّر، أنا في ضهرك. يلا نعملها سوا!', "Don't worry, little brother. I've got your back. Let's do this together!"));
+      await say(this, this.mom, L('خلّوا بالكم من بعض يا حبايبي، ونستناكم هنا 🤍', "Take care of each other, my loves. We'll wait for you right here 🤍"));
       Save.d.seenIntro = true; Save.put();
       Sfx.win();
       this.cameras.main.flash(500, 255, 255, 255);
