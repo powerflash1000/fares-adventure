@@ -12,7 +12,7 @@ const game = new Phaser.Game({
   backgroundColor: '#1c7ed6',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   render: { antialias: true, roundPixels: false },
-  input: { activePointers: 2 },
+  input: { activePointers: 3 },
   scene: [Boot, Title, Alex, Map, Plant1, Plant2, Plant3, Plant4, Plant5, Water1, Water2, Water3, Cave1, Cave2, Cave3, Light, Parent, Rest, Gallery, Coloring],
 });
 

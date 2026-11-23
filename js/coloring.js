@@ -6,7 +6,7 @@ import { SHARKS } from './sharks.js';
 const PW = 1280, PH = 960;              // دقة الرسمة (البكسلات الحقيقية)
 const SC = 0.625;                       // بتتعرض 800×600
 const PX = 20, PY = 96;                 // مكان الرسمة على الشاشة
-const MAXUNDO = 6;
+const MAXUNDO = 6, MAXZ = 5;
 
 // ---------- تخزين الرسمات الملوّنة (IndexedDB) ----------
 const idb = {
@@ -119,8 +119,9 @@ export class Coloring extends Phaser.Scene {
     this.add.rectangle(PX + 400, PY + 300, 800, 600, 0xffffff);
     this.paintTex = this.textures.exists('paint') ? this.textures.get('paint') : this.textures.createCanvas('paint', PW, PH);
     const ctx = this.paintTex.getContext(); ctx.clearRect(0, 0, PW, PH);
-    this.add.image(PX, PY, 'paint').setOrigin(0).setScale(SC);
-    this.add.image(PX, PY, 'line_' + this.sid).setOrigin(0).setScale(SC);
+    this.zoom = 1; this.ptrs = new Map(); this.g0 = null; this.gestureLock = false;
+    this.world = this.add.container(PX, PY, [this.add.image(0, 0, 'paint').setOrigin(0).setScale(SC), this.add.image(0, 0, 'line_' + this.sid).setOrigin(0).setScale(SC)]);
+    this.world.setMask(this.make.graphics({}, false).fillStyle(0xffffff).fillRect(PX, PY, 800, 600).createGeometryMask());
     this.buf = ctx.getImageData(0, 0, PW, PH);
 
     // مناطق التلوين الذكي من ألفا الخطوط
@@ -169,8 +170,12 @@ export class Coloring extends Phaser.Scene {
     button(this, W - 190, ty, L('تمّ ✔', 'Done ✔'), () => this.finish(), { w: 260, h: 80, color: 0x69db7c, text: '#0b3d1a', size: 38 });
     this.refreshTools();
 
-    // الرسم بالصباع
-    this.input.on('pointerdown', p => this.down(p));
+    // أزرار الزوم (جوه ورقة الرسم، يمين)
+    const zb = (y, label, fn) => button(this, PX + 800 - 46, PY + y, label, fn, { w: 68, h: 68, color: 0xffffff, size: 34 }).setDepth(20).setAlpha(0.9);
+    zb(56, '➕', () => this.zoomAt(PX + 400, PY + 300, 1.5)); zb(134, '➖', () => this.zoomAt(PX + 400, PY + 300, 1 / 1.5)); zb(212, '⤢', () => this.setView(1, PX, PY));
+    // الرسم بالصباع (صباع واحد = رسم، صباعين = تكبير وتحريك)
+    this.input.on('wheel', (p, o, dx, dy) => { if (this.inSheet(p)) this.zoomAt(p.x, p.y, dy < 0 ? 1.18 : 1 / 1.18); });
+    this.input.on('pointerdown', (p, over) => { if (!over.length) this.down(p); });
     this.input.on('pointermove', p => this.move(p));
     this.input.on('pointerup', p => this.up(p));
     this.input.on('pointerupoutside', p => this.up(p));
@@ -183,10 +188,25 @@ export class Coloring extends Phaser.Scene {
     mark('smart', this.smart); mark('erase', this.eraser);
     this.toolBtns.smart.list[2].setText(this.smart ? L('🧠 ذكي', '🧠 Smart') : L('✏️ حر', '✏️ Free'));
   }
-  toPaint(p) { return [(p.x - PX) / SC, (p.y - PY) / SC]; }
+  toPaint(p) { return [(p.x - this.world.x) / (this.zoom * SC), (p.y - this.world.y) / (this.zoom * SC)]; }
+  // عرض الورقة: zoom + مكان الركن الشمال-فوق (بنمنع الخروج برّه الإطار)
+  setView(z, wx, wy) {
+    z = Math.max(1, Math.min(MAXZ, z)); wx = Math.min(PX, Math.max(PX + 800 - 800 * z, wx)); wy = Math.min(PY, Math.max(PY + 600 - 600 * z, wy));
+    this.zoom = z; this.world.setScale(z).setPosition(wx, wy);
+  }
+  zoomAt(sx, sy, f) { const z = Math.max(1, Math.min(MAXZ, this.zoom * f)), cx = (sx - this.world.x) / this.zoom, cy = (sy - this.world.y) / this.zoom; this.setView(z, sx - cx * z, sy - cy * z); }
+  startGesture() {
+    if (this.drawing != null) { const sn = this.undo.pop(); if (sn) this.buf.data.set(sn); this.needRefresh = true; this.drawing = null; }  // لمسة الصباع الأولى ما تتحسبش رسم
+    this.gestureLock = true;
+    const [a, b] = [...this.ptrs.values()];
+    this.g0 = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, z: this.zoom, wx: this.world.x, wy: this.world.y };
+  }
   inSheet(p) { return p.x >= PX && p.y >= PY && p.x < PX + 800 && p.y < PY + 600; }
   down(p) {
-    if (this.drawing != null || !this.inSheet(p)) return;
+    if (!this.inSheet(p) && !this.ptrs.size) return;
+    this.ptrs.set(p.id, { x: p.x, y: p.y });
+    if (this.ptrs.size >= 2) { this.startGesture(); return; }
+    if (this.gestureLock || this.drawing != null) return;
     const [x, y] = this.toPaint(p), xi = Math.floor(x), yi = Math.floor(y);
     this.undo.push(this.buf.data.slice()); if (this.undo.length > MAXUNDO) this.undo.shift();
     this.drawing = p.id; this.last = [x, y];
@@ -194,16 +214,26 @@ export class Coloring extends Phaser.Scene {
     this.stamp(x, y); this.dirty = true;
   }
   move(p) {
+    if (this.ptrs.has(p.id)) this.ptrs.set(p.id, { x: p.x, y: p.y });
+    if (this.g0 && this.ptrs.size >= 2) {
+      const [a, b] = [...this.ptrs.values()], g = this.g0;
+      const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const z = Math.max(1, Math.min(MAXZ, g.z * d / g.d)), cx = (g.mx - g.wx) / g.z, cy = (g.my - g.wy) / g.z;
+      this.setView(z, mx - cx * z, my - cy * z); return;
+    }
     if (this.drawing !== p.id) return;
     const [x, y] = this.toPaint(p), [lx, ly] = this.last;
-    const d = Math.hypot(x - lx, y - ly), step = Math.max(2, this.size / 3), n = Math.ceil(d / step);
+    const d = Math.hypot(x - lx, y - ly), step = Math.max(1.5, this.size / this.zoom / 3), n = Math.ceil(d / step);
     for (let i = 1; i <= n; i++) this.stamp(lx + (x - lx) * i / n, ly + (y - ly) * i / n);
     this.last = [x, y];
   }
-  up(p) { if (this.drawing === p.id) { this.drawing = null; this.saveSoon(); } }
+  up(p) {
+    this.ptrs.delete(p.id); if (this.ptrs.size < 2) this.g0 = null; if (!this.ptrs.size) this.gestureLock = false;
+    if (this.drawing === p.id) { this.drawing = null; this.saveSoon(); }
+  }
   // نقطة فرشة: دايرة ناعمة الحواف، بتتلون بس جوه المنطقة المختارة
   stamp(cx, cy) {
-    const r = this.size, d = this.buf.data, lab = this.lab, reg = this.region;
+    const r = this.size / this.zoom, d = this.buf.data, lab = this.lab, reg = this.region;
     const x0 = Math.max(0, Math.floor(cx - r - 1)), x1 = Math.min(PW - 1, Math.ceil(cx + r + 1));
     const y0 = Math.max(0, Math.floor(cy - r - 1)), y1 = Math.min(PH - 1, Math.ceil(cy + r + 1));
     const [cr, cg, cb] = hexRGB(this.color), er = this.eraser;
