@@ -1,4 +1,5 @@
 // مشاهد اللعبة: البداية ← إسكندرية (الكورنيش) ← البوابة في مكتبة الإسكندرية ← خريطة الجزر ← جزيرة النبات (٣ مهمات) ← نور الفنار
+import { PRIZES } from './sharks.js';
 import { SVGS, W, H } from './art.js';
 import { FONT, Save, Sfx, speak, hush, button, say, celebrate, idle, gradient, back, L, rtl } from './sys.js';
 
@@ -164,6 +165,7 @@ export class Map extends Phaser.Scene {
     }
     const nori = this.add.image(170, 300, 'nori').setScale(0.55); idle(this, nori, 0.06);
     this.fares = this.add.image(170, H - 20, 'fares').setOrigin(0.5, 1).setScale(0.5); idle(this, this.fares);
+    button(this, W - 190, 140, L('🎨 تلوين', '🎨 Coloring'), () => { hush(); this.scene.start('Gallery'); }, { w: 300, h: 88, color: 0xff8787, text: '#ffffff', size: 36 });
     back(this, 'Title');
     const nextIs = ISLANDS.find(is => is.open && !isDone(is));
     const hello = nextIs ? nextIs.go : L('خلّصت كل الجزر يا بطل! العب تاني وقت ما تحب ✨', 'You finished all the islands! Play again anytime!');
@@ -344,6 +346,7 @@ export class Light extends Phaser.Scene {
       if (!on()) return;
       await say(this, nori, last); if (!on()) return;
       button(this, W / 2, 120, L('للخريطة 🗺️', 'To the map 🗺️'), () => this.scene.start('Map'), { w: 320 });
+      button(this, W / 2, 230, L('🎁 جايزتك: لوّن شارك!', '🎁 Your prize: color a shark!'), () => this.scene.start('Coloring', { id: `shark${String(PRIZES[lvl - 1]).padStart(2, '0')}`, prize: true, from: 'Map' }), { w: 560, h: 96, color: 0xff8787, text: '#ffffff', size: 36 });
     })();
   }
 }
