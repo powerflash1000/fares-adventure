@@ -17,4 +17,4 @@ export const SHARKS = [
 ].map(([en, ar], i) => ({ n: i + 1, id: `shark${String(i + 1).padStart(2, '0')}`, en, ar }));
 
 // جايزة كل جزيرة (بالترتيب: النبات، المية، كهف الشجاعة)
-export const PRIZES = [2, 3, 1];
+export const PRIZES = [2, 3, 1, 4, 5];

@@ -345,3 +345,203 @@ export class Cave3 extends Mission {
     } else { Sfx.soft(); await this.momSay(L('هممم، تفتكر ده هيخليهم يحسّوا بإيه؟ جرّب تاني', 'Hmm, how would that make them feel? Try again.')); this.busy = false; }
   }
 }
+
+// ================= جزيرة السفاري 🦁 — المهمة ١: بيوت الحيوانات =================
+const HOMES = [
+  { id: 'sea', ch: '🌊', name: () => L('البحر', 'The sea'), color: 0x4dabf7, x: 190 },
+  { id: 'tree', ch: '🌳', name: () => L('الشجرة', 'The tree'), color: 0x51cf66, x: 520 },
+  { id: 'farm', ch: '🏡', name: () => L('المزرعة', 'The farm'), color: 0xfcc419, x: 850 },
+];
+const HOME_ANIMALS = [
+  ['🐟', 'sea', () => L('سمكة!', 'A fish!')], ['🐳', 'sea', () => L('حوت!', 'A whale!')],
+  ['🐦', 'tree', () => L('عصفورة!', 'A bird!')], ['🐒', 'tree', () => L('قرد!', 'A monkey!')],
+  ['🐄', 'farm', () => L('بقرة!', 'A cow!')], ['🐑', 'farm', () => L('خروف!', 'A sheep!')],
+];
+export class Safari1 extends Mission {
+  constructor() { super('Safari1'); }
+  create() {
+    this.head(L('🦁 السفاري ١: بيوت الحيوانات', '🦁 Safari mission 1: Animal homes'), 'safari');
+    this.homes = HOMES.map(h => {
+      const y = H - 120, g = this.add.graphics();
+      g.fillStyle(0x000000, 0.15).fillRoundedRect(h.x - 132, y - 82, 264, 170, 26);
+      g.fillStyle(h.color, 0.95).fillRoundedRect(h.x - 130, y - 90, 260, 170, 26).lineStyle(6, 0xffffff, 0.9).strokeRoundedRect(h.x - 130, y - 90, 260, 170, 26);
+      this.add.text(h.x, y - 30, h.ch, { fontSize: 78 }).setOrigin(0.5);
+      this.add.text(h.x, y + 38, h.name(), { fontFamily: FONT, fontSize: 30, color: '#ffffff', fontStyle: '800', stroke: '#00000066', strokeThickness: 5, rtl: rtl() }).setOrigin(0.5);
+      return { ...h, rect: new Phaser.Geom.Rectangle(h.x - 140, y - 100, 280, 190), n: 0 };
+    });
+    this.left = HOME_ANIMALS.length;
+    Phaser.Utils.Array.Shuffle([...HOME_ANIMALS]).forEach(([ch, home, word], i) => { const o = emo(this, 120 + (i % 3) * 210, 210 + Math.floor(i / 3) * 150, ch, 96); o.home2 = home; o.word = word; idle(this, o, 0.04); });
+    dragSetup(this, o => this.drop(o));
+    this.hint(L('كل حيوان ليه بيت. وديّ كل حيوان لبيته!', 'Every animal has a home. Take each animal to its home!'));
+  }
+  async drop(o) {
+    const b = this.homes.find(k => k.rect.contains(o.x, o.y));
+    if (!b) return goHome(this, o);
+    if (b.id !== o.home2) { Sfx.soft(); goHome(this, o); return this.hint(L('همم، مش هنا. عايش فين؟', 'Hmm, not there. Where does it live?')); }
+    Sfx.ok(); this.input.setDraggable(o, false); o.disableInteractive();
+    this.tweens.add({ targets: o, x: b.x - 55 + b.n * 110, y: b.rect.y + 40, scale: 0.8, duration: 300 }); b.n++;
+    shout(this, o.word());
+    if (--this.left === 0) { await new Promise(r => this.time.delayedCall(1300, r)); await this.hint(L('رائع! السمك والحيتان في البحر، والعصافير والقرود على الشجر، والبقر والخرفان في المزرعة!', 'Wonderful! Fish and whales live in the sea, birds and monkeys live in trees, and cows and sheep live on the farm!')); this.win('safari1', 'Safari2'); }
+  }
+}
+
+// ================= جزيرة السفاري — المهمة ٢: مين بيقول كده؟ =================
+const SOUNDS = [
+  { ch: '🐄', q: () => L('موو موو! مين بيقول موو؟', 'Moo! Moo! Who says moo?') },
+  { ch: '🐱', q: () => L('ميااو ميااو! مين بيقول ميااو؟', 'Meow! Meow! Who says meow?') },
+  { ch: '🐶', q: () => L('هاو هاو! مين بيقول هاو؟', 'Woof! Woof! Who says woof?') },
+  { ch: '🦆', q: () => L('كواك كواك! مين بيقول كواك؟', 'Quack! Quack! Who says quack?') },
+  { ch: '🦁', q: () => L('غررر! مين بيزأر؟', 'Roar! Who says roar?') },
+];
+export class Safari2 extends Mission {
+  constructor() { super('Safari2'); }
+  create() {
+    this.head(L('🔊 السفاري ٢: صوت مين؟', '🔊 Safari mission 2: Who says that?'), 'safari');
+    this.rounds = Phaser.Utils.Array.Shuffle([...SOUNDS]); this.r = 0; this.btns = [];
+    this.hint(L('اسمع كويس! أنهي حيوان بيعمل الصوت ده؟', 'Listen carefully! Which animal makes this sound?')).then(() => { if (this.sys.isActive()) this.round(); });
+  }
+  round() {
+    this.btns.forEach(b => b.destroy()); this.btns = []; this.busy = false;
+    const s = this.rounds[this.r], others = Phaser.Utils.Array.Shuffle(SOUNDS.filter(x => x !== s)).slice(0, 2);
+    const speaker = this.add.text(W / 2 - 100, 170, '🔊', { fontSize: 100 }).setOrigin(0.5); this.btns.push(speaker);
+    Phaser.Utils.Array.Shuffle([s, ...others]).forEach((a, i) => {
+      const x = 260 + i * 270, y = 480, c = this.add.container(x, y), g = this.add.graphics().fillStyle(0xffffff, 0.92).fillRoundedRect(-110, -110, 220, 220, 36).lineStyle(6, 0xffd43b, 1).strokeRoundedRect(-110, -110, 220, 220, 36);
+      c.add([g, this.add.text(0, 0, a.ch, { fontSize: 120 }).setOrigin(0.5)]); c.setSize(220, 220).setInteractive({ useHandCursor: true }); this.btns.push(c);
+      c.on('pointerdown', () => this.pick(a, s, c));
+    });
+    this.hint(s.q());
+  }
+  async pick(a, s, c) {
+    if (this.busy) return;
+    if (a !== s) { Sfx.soft(); this.tweens.add({ targets: c, angle: 8, duration: 80, yoyo: true, repeat: 2 }); return this.hint(L('قربت! جرّب تاني 🤔', 'So close! Try again')); }
+    this.busy = true; Sfx.ok(); celebrate(this, c.x, c.y, 12); await shout(this, L('برافو!', 'Great job!'));
+    if (++this.r < this.rounds.length) this.round();
+    else { this.btns.forEach(b => b.destroy()); await this.hint(L('إنت عارف كل أصوات الحيوانات! إنت مستكشف سفاري حقيقي!', 'You know all the animal sounds! You are a real safari explorer!')); this.win('safari2', 'Safari3'); }
+  }
+}
+
+// ================= جزيرة السفاري — المهمة ٣: عدّ لحد عشرة =================
+const NUMS_AR = ['', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '١٠'];
+const NUMS_EN = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+const NUMS_ARW = ['', 'واحد', 'اتنين', 'تلاتة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'تمانية', 'تسعة', 'عشرة'];
+export class Safari3 extends Mission {
+  constructor() { super('Safari3'); }
+  create() {
+    this.head(L('🔢 السفاري ٣: عدّ لحد ١٠', '🔢 Safari mission 3: Count to ten'), 'safari');
+    this.rounds = [6, 8, 10]; this.r = 0; this.items = [];
+    this.hint(L('شايف كام حيوان؟ دوس على كل واحد وعدّ معايا!', 'How many animals can you see? Tap each one and count with me!')).then(() => { if (this.sys.isActive()) this.round(); });
+  }
+  round() {
+    this.items.forEach(i => i.destroy()); this.items = []; this.cnt = 0;
+    const n = this.rounds[this.r], pool = ['🦒', '🐘', '🦓', '🐅', '🦏', '🐊'];
+    const cols = 5;
+    for (let i = 0; i < n; i++) {
+      const x = 150 + (i % cols) * 170 + (Math.floor(i / cols) % 2) * 60, y = 360 + Math.floor(i / cols) * 190;
+      const o = emo(this, x, y, pool[i % pool.length], 100, false).setInteractive({ useHandCursor: true }); idle(this, o, 0.05); this.items.push(o);
+      o.on('pointerdown', () => this.tap(o, n));
+    }
+  }
+  async tap(o, n) {
+    if (o.done || this.busy) return; o.done = true; Sfx.pick(); this.cnt++;
+    const t = this.add.text(o.x, o.y - 70, NUMS_AR[this.cnt] ? L(NUMS_AR[this.cnt], String(this.cnt)) : '', { fontFamily: FONT, fontSize: 56, color: '#ffffff', fontStyle: '800', stroke: '#e8590c', strokeThickness: 9 }).setOrigin(0.5).setDepth(30); this.items.push(t);
+    this.tweens.add({ targets: o, scale: 1.25, duration: 160, yoyo: true });
+    await speak(L(NUMS_ARW[this.cnt], NUMS_EN[this.cnt]));
+    if (this.cnt === n) {
+      this.busy = true; Sfx.win(); celebrate(this, W / 2, 400, 18);
+      await shout(this, L('برافو! عدّيت ' + NUMS_ARW[n] + '!', 'Great job!'));
+      this.busy = false;
+      if (++this.r < this.rounds.length) this.round(); else { this.items.forEach(i => i.destroy()); this.win('safari3'); }
+    }
+  }
+}
+
+// ================= جزيرة الفضاء 🚀 — المهمة ١: نهار ولا ليل؟ =================
+const SKY = [
+  ['☀️', 'day', () => L('الشمس!', 'The sun!')], ['🌈', 'day', () => L('قوس قزح!', 'A rainbow!')], ['🦋', 'day', () => L('فراشة!', 'A butterfly!')],
+  ['🌙', 'night', () => L('القمر!', 'The moon!')], ['⭐', 'night', () => L('نجمة!', 'A star!')], ['🦉', 'night', () => L('بومة!', 'An owl!')],
+];
+export class Space1 extends Mission {
+  constructor() { super('Space1'); }
+  create() {
+    this.head(L('🌗 الفضاء ١: نهار ولا ليل؟', '🌗 Space mission 1: Day or night?'), 'space');
+    const zone = (id, x, c1, label, emoji) => {
+      const y = H - 130, g = this.add.graphics();
+      g.fillStyle(c1, 0.92).fillRoundedRect(x - 220, y - 100, 440, 190, 30).lineStyle(6, 0xffffff, 0.9).strokeRoundedRect(x - 220, y - 100, 440, 190, 30);
+      this.add.text(x, y - 25, emoji, { fontSize: 80 }).setOrigin(0.5);
+      this.add.text(x, y + 50, label, { fontFamily: FONT, fontSize: 34, color: '#ffffff', fontStyle: '800', stroke: '#00000066', strokeThickness: 5, rtl: rtl() }).setOrigin(0.5);
+      return { id, x, n: 0, rect: new Phaser.Geom.Rectangle(x - 230, y - 110, 460, 210) };
+    };
+    this.zones = [zone('day', 270, 0x339af0, L('النهار', 'Day'), '🏞️'), zone('night', 740, 0x3b2f8a, L('الليل', 'Night'), '🌃')];
+    this.left = SKY.length;
+    Phaser.Utils.Array.Shuffle([...SKY]).forEach(([ch, z, w], i) => { const o = emo(this, 120 + (i % 3) * 210, 210 + Math.floor(i / 3) * 150, ch, 96); o.zone = z; o.word = w; idle(this, o, 0.04); });
+    dragSetup(this, o => this.drop(o));
+    this.hint(L('فيه حاجات بنشوفها بالنهار وحاجات بالليل. حط كل حاجة في مكانها!', 'Some things we see in the day, and some at night. Put each one in the right place!'));
+  }
+  async drop(o) {
+    const z = this.zones.find(k => k.rect.contains(o.x, o.y));
+    if (!z) return goHome(this, o);
+    if (z.id !== o.zone) { Sfx.soft(); goHome(this, o); return this.hint(L('قربت! جرّب تاني 🤔', 'So close! Try again')); }
+    Sfx.ok(); this.input.setDraggable(o, false); o.disableInteractive();
+    this.tweens.add({ targets: o, x: z.x - 120 + z.n * 120, y: H - 150, scale: 0.7, duration: 300 }); z.n++;
+    shout(this, o.word());
+    if (--this.left === 0) { await new Promise(r => this.time.delayedCall(1300, r)); await this.hint(L('بالنهار بنشوف الشمس. وبالليل بنشوف القمر والنجوم!', 'In the day we see the sun. At night we see the moon and the stars!')); this.win('space1', 'Space2'); }
+  }
+}
+
+// ================= جزيرة الفضاء — المهمة ٢: عدّ الصاروخ =================
+export class Space2 extends Mission {
+  constructor() { super('Space2'); }
+  create() {
+    this.head(L('🚀 الفضاء ٢: أطلق الصاروخ', '🚀 Space mission 2: Launch the rocket'), 'space');
+    this.rocket = this.add.text(190, 560, '🚀', { fontSize: 190 }).setOrigin(0.5).setAngle(0); idle(this, this.rocket, 0.03);
+    this.next = 1;
+    const spots = Phaser.Utils.Array.Shuffle(Array.from({ length: 10 }, (_, i) => [420 + (i % 5) * 150, 390 + Math.floor(i / 5) * 190]));
+    this.btns = [];
+    for (let v = 1; v <= 10; v++) {
+      const [x, y] = spots[v - 1], c = this.add.container(x, y), g = this.add.graphics().fillStyle(0xffd43b, 1).fillCircle(0, 0, 62).lineStyle(6, 0xffffff, 1).strokeCircle(0, 0, 62);
+      c.add([g, this.add.text(0, 0, L(NUMS_AR[v], String(v)), { fontFamily: FONT, fontSize: 56, color: '#3b2a00', fontStyle: '800' }).setOrigin(0.5)]);
+      c.setSize(124, 124).setInteractive({ useHandCursor: true }); c.v = v; this.btns.push(c);
+      c.on('pointerdown', () => this.tap(c));
+    }
+    this.hint(L('ساعدني أطلّق الصاروخ! دوس على الأرقام بالترتيب من واحد لعشرة.', 'Help me launch the rocket! Tap the numbers in order, from one to ten.'));
+  }
+  async tap(c) {
+    if (this.busy) return;
+    if (c.v !== this.next) { Sfx.soft(); this.tweens.add({ targets: c, angle: 10, duration: 70, yoyo: true, repeat: 2 }); return; }
+    this.busy = true; Sfx.ok(); c.disableInteractive(); this.tweens.add({ targets: c, alpha: 0.35, scale: 0.8, duration: 200 });
+    this.rocket.y -= 22; this.next++;
+    await speak(L(NUMS_ARW[c.v], NUMS_EN[c.v]));
+    this.busy = false;
+    if (this.next > 10) {
+      this.busy = true; celebrate(this, this.rocket.x, this.rocket.y, 16);
+      this.tweens.add({ targets: this.rocket, y: -300, x: 260, duration: 1800, delay: 2600, ease: 'Cubic.In' });
+      await this.hint(L('تلاتة، اتنين، واحد… انطلق!', 'Three, two, one… blast off!'));
+      await new Promise(r => this.time.delayedCall(1600, r)); this.win('space2', 'Space3');
+    }
+  }
+}
+
+// ================= جزيرة الفضاء — المهمة ٣: كوكبنا الأرض (مع فريد) =================
+export class Space3 extends Mission {
+  constructor() { super('Space3'); }
+  create() {
+    this.head(L('🌍 الفضاء ٣: كوكبنا', '🌍 Space mission 3: Our planet'), 'space');
+    this.farid = this.add.image(120, H - 20, 'farid').setOrigin(0.5, 1).setScale(0.5); idle(this, this.farid, 0.02);
+    const P = Phaser.Utils.Array.Shuffle([['🌍', true], ['🪐', false], ['🌕', false], ['🟠', false]]);
+    this.planets = P.map(([ch, ok], i) => {
+      const x = 330 + i * 200, y = 400 + (i % 2) * 70, o = this.add.text(x, y, ch, { fontSize: 150, padding: { x: 8, y: 8 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      this.tweens.add({ targets: o, y: y - 14, duration: 1500 + i * 200, yoyo: true, repeat: -1, ease: 'Sine.InOut' }); o.ok = ok;
+      o.on('pointerdown', () => this.pick(o)); return o;
+    });
+    this.hint(L('إحنا عايشين على كوكب اسمه الأرض. تقدر تلاقيه؟', 'We live on a planet called Earth. Can you find it?'));
+  }
+  async pick(o) {
+    if (this.busy) return;
+    if (!o.ok) { Sfx.soft(); this.tweens.add({ targets: o, angle: 12, duration: 80, yoyo: true, repeat: 2 }); return this.hint(L('قربت! جرّب تاني 🤔', 'So close! Try again')); }
+    this.busy = true; Sfx.ok(); celebrate(this, o.x, o.y, 16); this.tweens.add({ targets: o, scale: 1.4, duration: 400, yoyo: true });
+    await this.hint(L('أيوه! دي الأرض، بيتنا. فيها مية وهوا وناس كتير!', 'Yes! This is Earth, our home. It has water, air, and lots of people!'));
+    this.farid.setTexture('farid_cheer');
+    await say(this, this.farid, L('برافو يا صغيّر! إنت رائد فضاء حقيقي!', "Great job, little brother! You're a real astronaut!"), { x: 380, y: H - 360 });
+    this.win('space3');
+  }
+}

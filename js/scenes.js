@@ -19,7 +19,7 @@ export class Boot extends Phaser.Scene {
     for (const [k, svg] of Object.entries(SVGS)) if (!(k in CHAR_ART)) this.load.svg(k, 'data:image/svg+xml;base64,' + btoa(svg.replace(/[^\x00-\x7f]/gu, c => `&#${c.codePointAt(0)};`)));
     // رسومات العيلة الحقيقية (Seedream) — الأوضاع: واقف، بيجري/بيمشي، بينط، بيحتفل، بيشاور
     for (const [k, poses] of Object.entries(CHAR_ART)) for (const p of poses) this.load.image(p ? `${k}_${p}` : k, `assets/art/chars/${p ? `${k}_${p}` : k}.png`);
-    for (const b of ['alex1', 'alex2', 'qaitbay', 'plant', 'water', 'cave']) this.load.image(`bg_${b}`, `assets/art/bg/${b}.jpg`);
+    for (const b of ['alex1', 'alex2', 'qaitbay', 'plant', 'water', 'cave', 'safari', 'space']) this.load.image(`bg_${b}`, `assets/art/bg/${b}.jpg`);
   }
   async create() {
     try { await document.fonts.load('800 40px Cairo'); await document.fonts.load('700 30px Cairo'); } catch { /* */ }
@@ -135,9 +135,11 @@ export class Alex extends Phaser.Scene {
 // ===== خريطة الجزر + الفنار =====
 // كل جزيرة ليها عدد نجوم؛ الجزيرة بتتفتح لما اللي قبلها تخلص (أو نور الفنار وصل لها)
 export const ISLANDS = [
-  { id: 'plant', name: L('جزيرة النبات 🌱', 'Plant Island 🌱'), x: 380, y: 330, scene: 'Plant1', total: 5, go: L('اختار جزيرة النبات علشان نبدأ! 🌱', 'Tap Plant Island to start! 🌱') },
-  { id: 'water', name: L('جزيرة المية 💧', 'Water Island 💧'), x: 720, y: 520, scene: 'Water1', total: 3, go: L('يلا على جزيرة المية! 💧', "Let's go to Water Island!") },
-  { id: 'cave', name: L('كهف الشجاعة 🔦', 'Brave Cave 🔦'), x: 460, y: 640, scene: 'Cave1', total: 3, go: L('يلا على كهف الشجاعة! 🔦', "Let's go to the Brave Cave!") },
+  { id: 'plant', name: L('جزيرة النبات 🌱', 'Plant Island 🌱'), x: 360, y: 320, scene: 'Plant1', total: 5, go: L('اختار جزيرة النبات علشان نبدأ! 🌱', 'Tap Plant Island to start! 🌱') },
+  { id: 'water', name: L('جزيرة المية 💧', 'Water Island 💧'), x: 620, y: 530, scene: 'Water1', total: 3, go: L('يلا على جزيرة المية! 💧', "Let's go to Water Island!") },
+  { id: 'cave', name: L('كهف الشجاعة 🔦', 'Brave Cave 🔦'), x: 380, y: 650, scene: 'Cave1', total: 3, go: L('يلا على كهف الشجاعة! 🔦', "Let's go to the Brave Cave!") },
+  { id: 'safari', name: L('جزيرة السفاري 🦁', 'Safari Island 🦁'), x: 640, y: 200, scene: 'Safari1', total: 3, go: L('يلا على جزيرة السفاري! 🦁', "Let's go to Safari Island!") },
+  { id: 'space', name: L('جزيرة الفضاء 🚀', 'Space Island 🚀'), x: 840, y: 370, scene: 'Space1', total: 3, go: L('يلا على جزيرة الفضاء! 🚀', "Let's go to Space Island!") },
 ];
 const isDone = is => Save.count(is.id) >= is.total;
 export const islandsDone = () => { let n = 0; for (const is of ISLANDS) { if (isDone(is)) n++; else break; } return n; };
@@ -179,7 +181,7 @@ export class Mission extends Phaser.Scene {
   head(title, bg = 'plant') {
     cover(this, `bg_${bg}`);
     if (bg === 'plant') { this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0.35); this.add.rectangle(W / 2, H - 70, W, 140, 0x8d5524).setAlpha(0.35); }
-    this.titleTxt = this.add.text(W / 2, 50, title, { fontFamily: FONT, fontSize: 38, color: bg === 'cave' ? '#fff3bf' : '#1b4332', fontStyle: '800', rtl: rtl(), backgroundColor: bg === 'plant' ? null : (bg === 'cave' ? '#00000088' : '#ffffffcc'), padding: { x: 16, y: 6 } }).setOrigin(0.5).setDepth(40);
+    this.titleTxt = this.add.text(W / 2, 50, title, { fontFamily: FONT, fontSize: 38, color: (bg === 'cave' || bg === 'space') ? '#fff3bf' : '#1b4332', fontStyle: '800', rtl: rtl(), backgroundColor: bg === 'plant' ? null : ((bg === 'cave' || bg === 'space') ? '#00000088' : '#ffffffcc'), padding: { x: 16, y: 6 } }).setOrigin(0.5).setDepth(40);
     this.backBtn = back(this, 'Map').setDepth(40);
     this.nori = this.add.image(W - 110, 330, 'nori').setScale(0.5); idle(this, this.nori, 0.06);
     this.kid = this.add.image(W - 120, H - 20, 'fares').setOrigin(0.5, 1).setScale(0.55); idle(this, this.kid);
@@ -321,25 +323,27 @@ export class Plant3 extends Mission {
 const LIGHT_LINES = [null,
   [L('جمعتوا كل نجوم جزيرة النبات! يلا ننوّر أول دور في الفنار ✨', "You got all the stars on Plant Island! Let's light up the lighthouse ✨"), L('جزيرة المية مستنيانا! يلا بينا 💧', 'Water Island is waiting for us! Let\'s go!')],
   [L('جمعتوا كل نجوم جزيرة المية! الفنار بينوّر أكتر ✨', 'You got all the stars on Water Island! The lighthouse is getting brighter ✨'), L('دلوقتي يلا على كهف الشجاعة! 🔦', "Now let's go to the Brave Cave!")],
+  [L('جمعتوا كل نجوم كهف الشجاعة! والفنار بينوّر جامد ✨', 'You got all the stars in the Brave Cave! The lighthouse is shining bright'), L('بس بصّوا! جزيرتين جداد ظهروا على الخريطة. يلا نستكشفهم! 🦁🚀', "But look! Two new islands appeared on the map. Let's explore them!")],
+  [L('خلّصتوا جزيرة السفاري! شعاع الفنار بقى يوصل بعيد أوي ✨', 'You finished Safari Island! The lighthouse beam is reaching far away'), L('فاضل جزيرة واحدة مستنيانا. يلا على جزيرة الفضاء! 🚀', "One more island is waiting for us. Let's go to Space Island!")],
   [L('عملتها! خلّصت كل الجزر، والفنار رجع ينوّر تاني! ✨', 'You did it! All the islands are done. The lighthouse is shining bright again ✨'), L('شكرًا يا فارس! إنت بطل إسكندرية الحقيقي 🌟', 'Thank you, Fares! You are a real hero of Alexandria!')],
 ];
 export class Light extends Phaser.Scene {
   constructor() { super('Light'); }
   create(data) {
-    const lvl = Phaser.Math.Clamp(data?.level || Save.d.pharos || 1, 1, 3);
+    const lvl = Phaser.Math.Clamp(data?.level || Save.d.pharos || 1, 1, 5);
     gradient(this, 0x0b1d3a, 0x1c3f75);
     for (let i = 0; i < 60; i++) this.add.circle(Math.random() * W, Math.random() * H * 0.6, 1.5 + Math.random() * 2, 0xffffff, 0.8);
-    const ph = this.add.image(W / 2 + 120, H - 10, `pharos${lvl - 1}`).setOrigin(0.5, 1).setScale(1.1);
+    const ph = this.add.image(W / 2 + 120, H - 10, `pharos${Math.min(3, lvl - 1)}`).setOrigin(0.5, 1).setScale(1.1);
     const nori = this.add.image(W / 2 - 300, 180, 'nori').setScale(0.6); idle(this, nori, 0.06);
     const kids = ['farha', 'fares', 'farid'].map((k, i) => this.add.image(130 + i * 150, H - 10, k).setOrigin(0.5, 1).setScale(0.5));
     let dad = null;
-    if (lvl === 3) { dad = this.add.image(W - 120, H - 10, 'dad').setOrigin(0.5, 1).setScale(0.6); this.add.image(W - 250, H - 10, 'mom').setOrigin(0.5, 1).setScale(0.6); }
+    if (lvl === 5) { dad = this.add.image(W - 120, H - 10, 'dad').setOrigin(0.5, 1).setScale(0.6); this.add.image(W - 250, H - 10, 'mom').setOrigin(0.5, 1).setScale(0.6); }
     const [first, last] = LIGHT_LINES[lvl];
     (async () => {
       const on = () => this.sys.isActive();
       await say(this, nori, first); if (!on()) return;
       Sfx.win(); this.cameras.main.flash(700, 255, 230, 150);
-      ph.setTexture(`pharos${lvl}`); celebrate(this, ph.x, H - 200, 30); kids.forEach(k => k.setTexture(`${k.texture.key}_cheer`));
+      ph.setTexture(`pharos${Math.min(3, lvl)}`); if (lvl >= 4) { const beam = this.add.graphics().setDepth(5); beam.fillStyle(0xfff3bf, 0.35).fillTriangle(ph.x, H - 520, ph.x + 700, H - 700, ph.x + 700, H - 330); this.tweens.add({ targets: beam, alpha: 0.2, duration: 700, yoyo: true, repeat: -1 }); } celebrate(this, ph.x, H - 200, 30); kids.forEach(k => k.setTexture(`${k.texture.key}_cheer`));
       await say(this, kids[1], L('شوفوا! الفنار بدأ ينوّر! 🌟', 'Look! The lighthouse is shining! 🌟'));
       if (!on()) return;
       if (dad) await say(this, dad, L('إحنا فخورين بيك أوي يا فارس! 🤍', 'We are so proud of you, Fares!'));
@@ -367,7 +371,7 @@ export class Parent extends Phaser.Scene {
     const T = (y, s) => this.add.text(W / 2, y, s, { fontFamily: FONT, fontSize: 32, color: '#212529', fontStyle: '700', rtl: rtl() }).setOrigin(0.5);
     T(80, L('ركن الأهل', 'Grown-ups corner'));
     T(150, L(`النجوم: ${Object.keys(Save.d.stars).length} — أدوار الفنار المنوّرة: ${Save.d.pharos}`, `Stars: ${Object.keys(Save.d.stars).length} — Lighthouse floors lit: ${Save.d.pharos}`));
-    T(200, L('فارس اتعلم: نمو النبات، احتياجات الكائن الحي، العدّ، الألوان، الأشكال، يطفو ولا يغرق، نضافة الطبيعة، كبير وصغير، النور والضل، الصدق والطيبة والمشاركة', 'Fares learned: how plants grow, what living things need, counting, colors, shapes, float and sink, caring for nature, big and small, light and shadow, honesty, kindness and sharing'));
+    T(200, L('فارس اتعلم: نمو النبات، احتياجات الكائن الحي، العدّ، الألوان، الأشكال، يطفو ولا يغرق، نضافة الطبيعة، كبير وصغير، النور والضل، الصدق والطيبة والمشاركة، بيوت الحيوانات وأصواتها، العدّ لحد عشرة، النهار والليل، والفضاء', 'Fares learned: how plants grow, what living things need, counting, colors, shapes, float and sink, caring for nature, big and small, light and shadow, honesty, kindness and sharing, animal homes and sounds, counting to ten, day and night, and space'));
     const tog = (y, label, key) => { const b = button(this, W / 2, y, `${label}: ${Save.d[key] ? L('شغّال', 'ON') : L('مقفول', 'OFF')}`, () => { Save.d[key] = !Save.d[key]; Save.put(); this.open(); }, { w: 520, color: 0xffffff, size: 30 }); return b; };
     tog(290, L('🔊 الأصوات', '🔊 Sounds'), 'sound'); tog(390, L('🗣️ صوت الراوي', '🗣️ Narrator'), 'voice');
     button(this, W / 2, 490, L('🌐 اللغة: عربي — English', '🌐 Language: English — عربي'), () => { Save.d.lang = Save.d.lang === 'ar' ? 'en' : 'ar'; Save.put(); location.reload(); }, { w: 520, color: 0xd0ebff, size: 30 });

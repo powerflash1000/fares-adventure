@@ -1,6 +1,6 @@
 // يشتغل من غير نت: بيحفظ ملفات اللعبة أول مرة. غيّر VERSION مع كل تحديث.
-const VERSION = 'fares-v8';
-const FILES = ['./', 'index.html', 'manifest.webmanifest', 'vendor/phaser.min.js', 'js/main.js?v=8', 'js/art.js', 'js/sys.js', 'js/scenes.js', 'js/voice.js', 'js/islands.js', 'js/coloring.js', 'js/sharks.js',
+const VERSION = 'fares-v9';
+const FILES = ['./', 'index.html', 'manifest.webmanifest', 'vendor/phaser.min.js', 'js/main.js?v=9', 'js/art.js', 'js/sys.js', 'js/scenes.js', 'js/voice.js', 'js/islands.js', 'js/coloring.js', 'js/sharks.js',
   'assets/icon-192.png', 'assets/icon-512.png',
   ...['400', '700', '800'].flatMap(w => [`assets/fonts/cairo-arabic-${w}-normal.woff2`, `assets/fonts/cairo-latin-${w}-normal.woff2`])];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
